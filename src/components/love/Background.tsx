@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type CSSProperties } from "react";
 import { HeartIcon } from "./ui";
 
 function rand(seed: number) {
