@@ -1,5 +1,6 @@
-import { forwardRef, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from "react";
+import { forwardRef, useState, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { HeartIcon } from "./ui";
 
 type LoveButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "primary" | "ghost";
@@ -7,24 +8,66 @@ type LoveButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 export const LoveButton = forwardRef<HTMLButtonElement, LoveButtonProps>(
-  ({ className, variant = "primary", children, ...props }, ref) => (
-    <button
-      ref={ref}
-      {...props}
-      className={cn(
-        "inline-flex min-h-[3.25rem] items-center justify-center rounded-full px-7 py-3.5 text-base font-semibold tracking-wide",
-        "transition-all duration-300 outline-none select-none",
-        "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        "active:scale-95",
-        variant === "primary"
-          ? "bg-gradient-to-r from-primary to-primary-glow text-primary-foreground shadow-[0_0_34px_-8px_var(--primary-glow)] hover:shadow-[0_0_56px_-6px_var(--primary-glow)] hover:brightness-110"
-          : "border border-border bg-white/5 text-foreground backdrop-blur-md hover:bg-white/10",
-        className,
-      )}
-    >
-      {children}
-    </button>
-  ),
+  ({ className, variant = "primary", children, onClick, ...props }, ref) => {
+    const [bursts, setBursts] = useState<{id: number, x: number, y: number}[]>([]);
+
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (variant === "primary") {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const cx = e.clientX - rect.left;
+        const cy = e.clientY - rect.top;
+        const newBursts = Array.from({ length: 12 }).map((_, i) => ({
+          id: Date.now() + i,
+          x: cx + (Math.random() - 0.5) * 40,
+          y: cy + (Math.random() - 0.5) * 40,
+        }));
+        setBursts(newBursts);
+        setTimeout(() => setBursts([]), 1000);
+      }
+      onClick?.(e);
+    };
+
+    return (
+      <button
+        ref={ref}
+        onClick={handleClick}
+        {...props}
+        className={cn(
+          "relative overflow-hidden inline-flex min-h-[3.25rem] items-center justify-center rounded-full px-7 py-3.5 text-base font-semibold tracking-wide",
+          "transition-all duration-300 outline-none select-none",
+          "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          "active:scale-95 group",
+          variant === "primary"
+            ? "bg-gradient-to-r from-primary to-primary-glow text-primary-foreground shadow-[0_0_34px_-8px_var(--primary-glow)] hover:shadow-[0_0_56px_-6px_var(--primary-glow)] hover:brightness-110"
+            : "border border-border bg-white/5 text-foreground backdrop-blur-md hover:bg-white/10",
+          className,
+        )}
+      >
+        {variant === "primary" && (
+          <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden rounded-full">
+            <div className="absolute inset-0 w-1/2 -translate-x-[150%] bg-gradient-to-r from-transparent via-white/40 to-transparent group-hover:animate-sweep opacity-70" />
+          </div>
+        )}
+        <span className="relative z-10 flex items-center justify-center w-full h-full pointer-events-none">
+           {children}
+        </span>
+        {bursts.length > 0 && bursts.map(b => (
+          <HeartIcon
+             key={b.id}
+             className="absolute text-white/90 pointer-events-none z-20"
+             style={{
+                width: 10 + Math.random() * 8,
+                height: 10 + Math.random() * 8,
+                left: b.x, top: b.y,
+                "--bx": `${(Math.random()-0.5)*120}px`,
+                "--by": `${-40 - Math.random()*120}px`,
+                animation: `burst 0.8s ease-out forwards`,
+             } as CSSProperties}
+          />
+        ))}
+      </button>
+    );
+  }
 );
 LoveButton.displayName = "LoveButton";
 
