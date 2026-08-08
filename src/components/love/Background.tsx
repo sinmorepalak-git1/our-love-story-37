@@ -61,16 +61,17 @@ export function LoveBackground({ intense = false }: { intense?: boolean }) {
         <HeartIcon
           key={`h${i}`}
           className="absolute bottom-0 text-primary-glow"
-          // @ts-expect-error custom props
-          style={{
-            left: h.left,
-            width: h.size,
-            height: h.size,
-            "--s": 1,
-            "--o": intense ? h.opacity + 0.25 : h.opacity,
-            "--dx": h.dx,
-            animation: `float-up ${intense ? h.duration * 0.55 : h.duration}s linear ${h.delay}s infinite`,
-          }}
+          style={
+            {
+              left: h.left,
+              width: h.size,
+              height: h.size,
+              "--s": 1,
+              "--o": intense ? h.opacity + 0.25 : h.opacity,
+              "--dx": h.dx,
+              animation: `float-up ${intense ? h.duration * 0.55 : h.duration}s linear ${h.delay}s infinite`,
+            } as CSSProperties
+          }
         />
       ))}
     </div>
