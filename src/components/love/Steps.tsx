@@ -115,7 +115,7 @@ export function EnvelopeStep({ onOpen }: { onOpen: () => void }) {
 
 export function LetterStep({ onDone }: { onDone: () => void }) {
   const [i, setI] = useState(0);
-  const current = letters[i];
+  const current = letters[i]!;
 
   return (
     <Screen>
@@ -145,7 +145,7 @@ export function QuestionsStep({ onDone }: { onDone: () => void }) {
   const [finished, setFinished] = useState(false);
 
   const answer = () => {
-    setReply(questions[i].reply);
+    setReply(questions[i]!.reply);
     setTimeout(() => {
       setReply(null);
       if (i < questions.length - 1) setI(i + 1);
@@ -180,9 +180,9 @@ export function QuestionsStep({ onDone }: { onDone: () => void }) {
           <p className="animate-step-in font-display text-2xl leading-relaxed">{reply}</p>
         ) : (
           <>
-            <p className="font-display text-3xl font-semibold">{questions[i].title}</p>
+            <p className="font-display text-3xl font-semibold">{questions[i]!.title}</p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
-              {questions[i].options.map((opt) => (
+              {questions[i]!.options.map((opt) => (
                 <LoveButton key={opt} onClick={answer} className="w-full sm:w-auto">
                   {opt}
                 </LoveButton>
