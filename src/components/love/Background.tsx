@@ -3,7 +3,7 @@ import { HeartIcon } from "./ui";
 
 function rand(seed: number) {
   const x = Math.sin(seed * 9973.13) * 10000;
-  return x - Math.floor(x);
+  return Math.round((x - Math.floor(x)) * 1000) / 1000;
 }
 
 export function LoveBackground({ intense = false }: { intense?: boolean }) {
