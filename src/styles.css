@@ -157,5 +157,143 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-body);
+    overflow-x: hidden;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+  }
+}
+
+@utility love-bg {
+  background: var(--gradient-love);
+  background-size: 100% 140%;
+  animation: bg-drift 18s ease-in-out infinite alternate;
+}
+
+@utility glass-card {
+  background: linear-gradient(
+    145deg,
+    oklch(1 0 0 / 12%),
+    oklch(1 0 0 / 4%)
+  );
+  border: 1px solid oklch(1 0 0 / 14%);
+  backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: var(--shadow-soft);
+  border-radius: var(--radius-3xl);
+}
+
+@utility text-glow {
+  text-shadow: 0 0 28px oklch(0.75 0.18 350 / 60%);
+}
+
+@utility glow-ring {
+  box-shadow: var(--shadow-glow);
+}
+
+@keyframes bg-drift {
+  from {
+    background-position: 50% 0%;
+  }
+  to {
+    background-position: 50% 100%;
+  }
+}
+
+@keyframes float-up {
+  0% {
+    transform: translate3d(0, 10vh, 0) scale(var(--s, 1));
+    opacity: 0;
+  }
+  10% {
+    opacity: var(--o, 0.5);
+  }
+  90% {
+    opacity: var(--o, 0.5);
+  }
+  100% {
+    transform: translate3d(var(--dx, 0px), -110vh, 0) scale(var(--s, 1));
+    opacity: 0;
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: scale(0.7);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes soft-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(1deg);
+  }
+}
+
+@keyframes heart-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 26px oklch(0.7 0.2 350 / 70%));
+  }
+  50% {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 52px oklch(0.8 0.2 350 / 90%));
+  }
+}
+
+@keyframes step-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes burst {
+  from {
+    transform: translate3d(0, 0, 0) scale(0.4);
+    opacity: 1;
+  }
+  to {
+    transform: translate3d(var(--bx), var(--by), 0) scale(1.1);
+    opacity: 0;
+  }
+}
+
+@utility animate-step-in {
+  animation: step-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@utility animate-soft-float {
+  animation: soft-float 4.5s ease-in-out infinite;
+}
+
+@utility animate-heart-pulse {
+  animation: heart-pulse 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
