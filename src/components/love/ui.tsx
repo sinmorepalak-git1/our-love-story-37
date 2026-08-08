@@ -1,4 +1,4 @@
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { forwardRef, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 type LoveButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -28,9 +28,15 @@ export const LoveButton = forwardRef<HTMLButtonElement, LoveButtonProps>(
 );
 LoveButton.displayName = "LoveButton";
 
-export function HeartIcon({ className }: { className?: string }) {
+export function HeartIcon({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: CSSProperties;
+}) {
   return (
-    <svg viewBox="0 0 32 29" aria-hidden="true" className={className}>
+    <svg viewBox="0 0 32 29" aria-hidden="true" className={className} style={style}>
       <path
         fill="currentColor"
         d="M16 28.5S0 19.2 0 9.6A8.6 8.6 0 0 1 8.7 1c3.1 0 5.8 1.7 7.3 4.2C17.5 2.7 20.2 1 23.3 1A8.6 8.6 0 0 1 32 9.6c0 9.6-16 18.9-16 18.9Z"
