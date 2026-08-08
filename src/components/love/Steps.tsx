@@ -11,77 +11,140 @@ import { CursorTrail } from "./Background";
 
 /* ---------------- STEP 0: Countdown ---------------- */
 export function CountdownStep({ onDone }: { onDone: () => void }) {
-  const [count, setCount] = useState(3);
+  const [phase, setPhase] = useState<'sprinkle' | '3' | '2' | '1' | 'burst'>('sprinkle');
+  const [bursts, setBursts] = useState<{ id: number; bx: number; by: number; scale: number; type: string }[]>([]);
 
   useEffect(() => {
-    if (count > 0) {
-      const timer = setTimeout(() => setCount(count - 1), 1000);
-      return () => clearTimeout(timer);
-    } else {
-      onDone();
-    }
-  }, [count, onDone]);
+    const t1 = setTimeout(() => setPhase('3'), 800);
+    const t2 = setTimeout(() => setPhase('2'), 1800);
+    const t3 = setTimeout(() => setPhase('1'), 2800);
+    const t4 = setTimeout(() => {
+      setPhase('burst');
+      // Generate cinematic heart burst
+      const newBursts = Array.from({ length: 80 }).map((_, i) => ({
+        id: i,
+        bx: (Math.random() - 0.5) * 800,
+        by: (Math.random() - 0.5) * 800,
+        scale: 0.5 + Math.random(),
+        type: Math.random() > 0.6 ? 'sparkle' : (Math.random() > 0.5 ? 'heart' : 'outline')
+      }));
+      setBursts(newBursts);
+    }, 3800);
+    const t5 = setTimeout(() => onDone(), 4200);
+
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); clearTimeout(t5); }
+  }, [onDone]);
 
   return (
-    <Screen>
-      <div className="flex w-full flex-col items-center justify-center">
-        <div
-          key={count}
-          className="animate-countdown text-glow font-display text-[12rem] font-bold text-primary-glow sm:text-[15rem] leading-none"
-          style={{ filter: "drop-shadow(0 0 60px var(--primary-glow))" }}
-        >
-          {count}
-        </div>
-        <p className="mt-8 text-lg text-primary-glow font-medium animate-pulse opacity-80">
-          Something special is about to begin... ❤️
-        </p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-gradient-to-b from-[#6A1A3B] via-[#3B0E23] to-[#1C0612] animate-step-in">
+      {/* Gentle Pink Glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,100,150,0.15)_0%,transparent_60%)]" />
+
+      {/* Heart Sprinkles */}
+      <div className="absolute inset-0 pointer-events-none">
+        {Array.from({ length: 30 }).map((_, i) => (
+          <div key={`sprinkle-${i}`} className="absolute text-[#FF9BC4] animate-float-up"
+               style={{ left: `${Math.random() * 100}%`, fontSize: `${8 + Math.random() * 12}px`, opacity: 0.2 + Math.random() * 0.3, animationDuration: `${4 + Math.random() * 6}s`, animationDelay: `${Math.random() * 2}s` }}>
+            {["♡", "♥", "💗", "💕"][i % 4]}
+          </div>
+        ))}
+        {Array.from({ length: 15 }).map((_, i) => (
+          <div key={`sparkle-${i}`} className="absolute text-white animate-pulse"
+               style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%`, fontSize: `${6 + Math.random() * 8}px`, opacity: 0.3 + Math.random() * 0.4, animationDuration: `${1 + Math.random() * 2}s`, animationDelay: `${Math.random() * 1}s` }}>
+            ✦
+          </div>
+        ))}
       </div>
-    </Screen>
+
+      {/* Countdown Numbers */}
+      {['3', '2', '1'].map((num) => (
+        phase === num && (
+          <div
+            key={num}
+            className="absolute animate-countdown font-serif text-[12rem] sm:text-[18rem] font-bold text-transparent bg-clip-text bg-gradient-to-b from-[#FFF0F5] to-[#FF9BC4]"
+            style={{ 
+              filter: num === '1' ? "drop-shadow(0 0 40px rgba(255,155,196,0.8))" : "drop-shadow(0 0 25px rgba(255,155,196,0.5))",
+            }}
+          >
+            {num}
+            {/* Orbiting hearts */}
+            <div className="absolute inset-0 animate-[spin_4s_linear_infinite] pointer-events-none">
+              <span className="absolute -top-4 left-1/2 text-2xl text-[#FF9BC4] opacity-70">♡</span>
+              <span className="absolute -bottom-4 left-1/2 text-xl text-[#FF4F98] opacity-70">💗</span>
+            </div>
+          </div>
+        )
+      ))}
+
+      {/* Cinematic Heart Burst */}
+      {phase === 'burst' && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 bg-[#FF9BC4]/10 animate-fade-out" />
+          {bursts.map(b => b.type === 'sparkle' ? (
+             <div key={b.id} className="absolute text-white" style={{ fontSize: 10 + b.scale * 15, "--bx": `${b.bx}px`, "--by": `${b.by}px`, animation: `burst 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards` } as CSSProperties}>✦</div>
+          ) : (
+            <div key={b.id} className={`absolute ${b.type === 'outline' ? 'text-[#FFD1E2]' : 'text-[#FF4F98]'}`} style={{ fontSize: 15 + b.scale * 20, filter: 'drop-shadow(0 0 10px rgba(255,79,152,0.5))', "--bx": `${b.bx}px`, "--by": `${b.by}px`, animation: `burst 0.8s ease-out forwards` } as CSSProperties}>
+              {b.type === 'outline' ? '♡' : '💗'}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
-/* ---------------- STEP 1: Love.exe loading ---------------- */
+/* ---------------- STEP 1: Love.exe loading -> Searching for the prettiest smile ---------------- */
 export function LoadingStep({ onDone }: { onDone: () => void }) {
-  const [progress, setProgress] = useState(0);
+  const [phase, setPhase] = useState<'searching' | 'found'>('searching');
 
   useEffect(() => {
-    const start = performance.now();
-    const total = 3400;
-    let frame = 0;
-    const tick = (now: number) => {
-      const pct = Math.min(100, Math.round(((now - start) / total) * 100));
-      setProgress(pct);
-      if (pct < 100) frame = requestAnimationFrame(tick);
-      else setTimeout(onDone, 1100);
-    };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
+    const t1 = setTimeout(() => setPhase('found'), 2000);
+    const t2 = setTimeout(() => onDone(), 2800);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [onDone]);
 
-  const status =
-    loadingStatuses[
-      Math.min(loadingStatuses.length - 1, Math.floor(progress / 20))
-    ];
-
   return (
-    <Screen>
-      <p className="text-sm tracking-[0.35em] text-muted-foreground uppercase">
-        Initializing Love.exe...
-      </p>
-      <div
-        className="text-glow mt-6 font-display text-7xl leading-none font-semibold sm:text-8xl"
-        aria-live="polite"
-      >
-        {progress}%
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-[#6A1A3B] via-[#3B0E23] to-[#1C0612] animate-step-in transition-opacity duration-700" style={{ opacity: phase === 'found' ? 0.9 : 1 }}>
+      {/* Background Glow */}
+      <div className={`absolute inset-0 transition-opacity duration-1000 ${phase === 'found' ? 'bg-[radial-gradient(circle_at_center,rgba(255,100,150,0.3)_0%,transparent_70%)]' : 'bg-[radial-gradient(circle_at_center,rgba(255,100,150,0.1)_0%,transparent_50%)]'}`} />
+
+      {/* Floating Transition Hearts */}
+      {phase === 'found' && (
+        <div className="absolute inset-0 pointer-events-none">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div key={i} className="absolute text-[#FF9BC4] animate-float-up" style={{ left: `${20 + Math.random() * 60}%`, fontSize: `${20 + Math.random() * 20}px`, bottom: '-10%', animationDuration: `${2 + Math.random() * 2}s`, filter: 'blur(1px)' }}>
+              💗
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Central Content */}
+      <div className="relative z-10 flex flex-col items-center animate-soft-float">
+        {phase === 'searching' ? (
+          <>
+            <p className="text-xl sm:text-2xl font-serif text-[#FFD1E2] animate-step-in text-center px-4" style={{ filter: "drop-shadow(0 0 10px rgba(255,209,226,0.5))" }}>
+              Searching for the prettiest smile... <span className="inline-block animate-pulse">💗</span>
+            </p>
+            <div className="mt-8 flex gap-3 text-2xl text-[#FF9BC4]">
+              <span className="animate-bounce" style={{ animationDelay: '0s' }}>♡</span>
+              <span className="animate-bounce" style={{ animationDelay: '0.2s' }}>♡</span>
+              <span className="animate-bounce" style={{ animationDelay: '0.4s' }}>♡</span>
+            </div>
+            <div className="mt-6 text-[#FF4F98] text-3xl animate-[spin_3s_linear_infinite] drop-shadow-[0_0_15px_rgba(255,79,152,0.6)]">
+              ↻
+            </div>
+          </>
+        ) : (
+          <div className="animate-step-in flex flex-col items-center">
+            <p className="text-3xl sm:text-4xl font-serif text-[#FFF0F5] font-bold" style={{ filter: "drop-shadow(0 0 20px rgba(255,240,245,0.8))" }}>
+              Found her.
+            </p>
+            <HeartIcon className="mt-6 w-20 h-20 text-[#FF4F98] animate-heartbeat-soft drop-shadow-[0_0_30px_rgba(255,79,152,0.9)]" />
+          </div>
+        )}
       </div>
-      <div className="mt-8 h-2.5 w-full max-w-sm overflow-hidden rounded-full bg-white/10">
-        <div
-          className="h-full rounded-full bg-gradient-to-r from-primary to-primary-glow shadow-[0_0_20px_var(--primary-glow)] transition-[width] duration-100"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-      <p className="mt-6 min-h-6 text-base text-muted-foreground">{status}</p>
-    </Screen>
+    </div>
   );
 }
 
