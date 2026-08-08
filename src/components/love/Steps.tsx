@@ -7,6 +7,7 @@ import {
   letters,
   rememberWhen,
 } from "./content";
+import { CursorTrail } from "./Background";
 
 /* ---------------- STEP 0: Countdown ---------------- */
 export function CountdownStep({ onDone }: { onDone: () => void }) {
@@ -438,7 +439,7 @@ export function QuestionsStep({ onDone }: { onDone: () => void }) {
 export function ProposalStep({ onYes }: { onYes: () => void }) {
   const [tries, setTries] = useState(0);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
-  const [bursts, setBursts] = useState<{ id: number; x: number; y: number }[]>([]);
+  const [bursts, setBursts] = useState<{ id: number; x: number; y: number; isSparkle?: boolean }[]>([]);
   const isYesNow = tries >= noButtonTexts.length - 1;
 
   const dodge = () => {
@@ -451,15 +452,16 @@ export function ProposalStep({ onYes }: { onYes: () => void }) {
   };
 
   const handleYes = (e: React.MouseEvent<HTMLButtonElement>) => {
-    // Generate heart burst
+    // Generate beautiful heart explosion with sparkles
     const rect = e.currentTarget.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
     
-    const newBursts = Array.from({ length: 35 }).map((_, i) => ({
+    const newBursts = Array.from({ length: 40 }).map((_, i) => ({
       id: Date.now() + i,
-      x: cx + (Math.random() - 0.5) * 60, // rough origin
+      x: cx + (Math.random() - 0.5) * 60,
       y: cy + (Math.random() - 0.5) * 60,
+      isSparkle: Math.random() > 0.65
     }));
     
     setBursts(newBursts);
@@ -472,23 +474,26 @@ export function ProposalStep({ onYes }: { onYes: () => void }) {
 
   return (
     <div className="w-full min-h-[100dvh] flex items-center justify-center flex-col px-4 py-12 text-center overflow-hidden animate-step-in relative">
+      <CursorTrail />
       {/* 1. Dark Rose Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#3B071F] via-[#7A1245] to-[#D83F82] pointer-events-none -z-20 animate-step-in" />
       
       {/* 12. Background Glow */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(216,63,130,0.4)_0%,transparent_70%)] pointer-events-none -z-10" />
 
-      {/* Floating Hearts & Sparkles */}
+      {/* Floating Hearts, Petals & Sparkles */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
         {/* Layer 1: Very Faint Hearts */}
         {Array.from({ length: 20 }).map((_, i) => (
           <div key={`tiny-${i}`} className="absolute text-white animate-float-up"
                style={{ left: `${Math.random() * 100}%`, fontSize: `${8 + Math.random() * 6}px`, opacity: 0.1 + Math.random() * 0.15, animationDuration: `${6 + Math.random() * 8}s`, animationDelay: `${Math.random() * 5}s` }}>♡</div>
         ))}
-        {/* Layer 2: Medium Translucent Hearts */}
-        {Array.from({ length: 15 }).map((_, i) => (
+        {/* Layer 2: Medium Translucent Hearts & Petals */}
+        {Array.from({ length: 20 }).map((_, i) => (
           <div key={`med-${i}`} className="absolute text-[#FF9BC4] animate-float-up"
-               style={{ left: `${Math.random() * 100}%`, fontSize: `${16 + Math.random() * 14}px`, opacity: 0.15 + Math.random() * 0.2, animationDuration: `${8 + Math.random() * 12}s`, animationDelay: `${Math.random() * 5}s` }}>💗</div>
+               style={{ left: `${Math.random() * 100}%`, fontSize: `${14 + Math.random() * 14}px`, opacity: 0.15 + Math.random() * 0.2, animationDuration: `${8 + Math.random() * 12}s`, animationDelay: `${Math.random() * 5}s` }}>
+            {i % 4 === 0 ? "🌸" : "💗"}
+          </div>
         ))}
         {/* Layer 3: Foreground Glowing Hearts */}
         {Array.from({ length: 8 }).map((_, i) => (
@@ -508,7 +513,20 @@ export function ProposalStep({ onYes }: { onYes: () => void }) {
       {bursts.length > 0 && (
         <div className="fixed inset-0 pointer-events-none z-50">
           <div className="absolute inset-0 bg-[#FF4F98]/20 animate-fade-out" />
-          {bursts.map(b => (
+          {bursts.map(b => b.isSparkle ? (
+            <div
+              key={b.id}
+              className="absolute text-white animate-pulse"
+              style={{
+                fontSize: 10 + Math.random() * 20,
+                left: b.x, top: b.y,
+                "--bx": `${(Math.random()-0.5)*600}px`,
+                "--by": `${-200 - Math.random()*500}px`,
+                animation: `burst 1.5s cubic-bezier(0.25, 1, 0.5, 1) forwards`,
+                transform: `rotate(${(Math.random() - 0.5) * 180}deg)`,
+              } as CSSProperties}
+            >✦</div>
+          ) : (
             <HeartIcon
               key={b.id}
               className="absolute text-[#FF9BC4]"
@@ -516,6 +534,7 @@ export function ProposalStep({ onYes }: { onYes: () => void }) {
                 width: 15 + Math.random() * 25, 
                 height: 15 + Math.random() * 25,
                 left: b.x, top: b.y,
+                color: Math.random() > 0.6 ? '#FF4F98' : (Math.random() > 0.5 ? '#FF9BC4' : '#FFD1E2'),
                 "--bx": `${(Math.random()-0.5)*500}px`,
                 "--by": `${-150 - Math.random()*400}px`,
                 animation: `burst 1.5s ease-out forwards`,
@@ -528,26 +547,37 @@ export function ProposalStep({ onYes }: { onYes: () => void }) {
 
       {/* 3. Glowing Rose Glass Proposal Card */}
       <div 
-        className="relative z-10 flex w-[94%] sm:w-full max-w-[700px] flex-col items-center rounded-[36px] p-8 sm:px-14 sm:py-16 animate-step-in animate-soft-float"
+        className="relative z-10 flex w-[94%] sm:w-full max-w-[700px] flex-col items-center rounded-[36px] p-8 sm:px-14 sm:py-16 animate-step-in animate-soft-float animate-card-glow"
         style={{ 
           background: "rgba(92, 15, 55, 0.60)",
           backdropFilter: "blur(20px)",
           border: "1px solid rgba(255, 160, 200, 0.35)",
-          boxShadow: "inset 0 0 30px rgba(255, 70, 150, 0.1), 0 20px 60px rgba(255, 70, 150, 0.25)"
         }}
       >
-        {/* Top Heart Ornament */}
+        {/* Bow/Heart Corner Decorations */}
+        <div className="absolute top-4 left-4 text-[#FF9BC4] opacity-40 text-lg">❦</div>
+        <div className="absolute top-4 right-4 text-[#FF9BC4] opacity-40 text-lg scale-x-[-1]">❦</div>
+        <div className="absolute bottom-4 left-4 text-[#FF9BC4] opacity-40 text-lg scale-y-[-1]">❦</div>
+        <div className="absolute bottom-4 right-4 text-[#FF9BC4] opacity-40 text-lg scale-y-[-1] scale-x-[-1]">❦</div>
+
+        {/* Top Heart / Wax Seal Ornament */}
         <div className="absolute -top-14 flex flex-col items-center justify-center animate-step-in" style={{ animationDelay: '0.2s' }}>
           <div className="relative flex items-center text-2xl text-[#FFD1E2] font-light opacity-80">
-            ♡ <span className="text-[3rem] mx-4 text-[#FF4F98] animate-heart-pulse drop-shadow-[0_0_20px_rgba(255,79,152,0.8)]">💗</span> ♡
+            ♡ 
+            <div className="relative mx-4 flex items-center justify-center">
+              {/* Wax seal background circle */}
+              <div className="absolute w-14 h-14 bg-gradient-to-br from-[#FF4F98] to-[#920F37] rounded-full opacity-30 blur-[2px]" />
+              <span className="text-[3rem] text-[#FF4F98] animate-heartbeat-soft drop-shadow-[0_0_20px_rgba(255,79,152,0.8)] relative z-10">💗</span> 
+            </div>
+            ♡
           </div>
         </div>
 
         {/* Card Internal Decoration */}
-        <div className="absolute top-8 left-8 text-[#FF9BC4] opacity-30 text-xl animate-soft-float">♡</div>
-        <div className="absolute bottom-16 left-10 text-[#FF9BC4] opacity-20 text-2xl animate-soft-float" style={{ animationDelay: '1s' }}>💕</div>
+        <div className="absolute top-8 left-10 text-[#FF9BC4] opacity-30 text-xl animate-soft-float">♡</div>
+        <div className="absolute bottom-16 left-12 text-[#FF9BC4] opacity-20 text-2xl animate-soft-float" style={{ animationDelay: '1s' }}>💕</div>
         <div className="absolute top-12 right-12 text-[#FF9BC4] opacity-30 text-xl animate-soft-float" style={{ animationDelay: '0.5s' }}>♡</div>
-        <div className="absolute bottom-20 right-8 text-[#FF9BC4] opacity-20 text-xl animate-soft-float" style={{ animationDelay: '1.5s' }}>✦</div>
+        <div className="absolute bottom-20 right-10 text-[#FF9BC4] opacity-20 text-xl animate-soft-float" style={{ animationDelay: '1.5s' }}>✦</div>
 
         {/* 5. Header */}
         <p className="font-display text-xl sm:text-2xl text-[#FFD1E2] mt-2 flex items-center gap-3 animate-step-in drop-shadow-[0_0_10px_rgba(255,209,226,0.3)]" style={{ animationDelay: '0.4s' }}>
@@ -565,7 +595,7 @@ export function ProposalStep({ onYes }: { onYes: () => void }) {
           <span className="absolute top-1/2 -left-6 text-[#FF9BC4] opacity-40 text-xl animate-soft-float" style={{ animationDelay: '0.8s' }}>💕</span>
           <span className="absolute bottom-0 -right-8 text-[#FFD1E2] opacity-30 text-lg animate-soft-float" style={{ animationDelay: '1.5s' }}>♡</span>
 
-          Kya Tum Meri<br/>Girlfriend<br/>Banogi? <span className="inline-block animate-heart-pulse text-[#FF4F98] ml-1 drop-shadow-[0_0_20px_rgba(255,79,152,0.7)]">❤️</span>
+          Kya Tum Meri<br/>Girlfriend<br/>Banogi? <span className="inline-block animate-heartbeat-soft text-[#FF4F98] ml-1 drop-shadow-[0_0_20px_rgba(255,79,152,0.7)]">❤️</span>
         </h2>
 
         {/* 8. Message Box */}
@@ -593,17 +623,19 @@ export function ProposalStep({ onYes }: { onYes: () => void }) {
           <button 
             className="group relative flex items-center justify-center rounded-full bg-gradient-to-r from-[#FF4F98] via-[#FF72AE] to-[#FF9BC4] px-14 py-4 sm:py-5 text-xl sm:text-2xl font-bold text-white shadow-[0_10px_35px_rgba(255,79,152,0.6)] transition-all hover:scale-[1.04] hover:shadow-[0_15px_45px_rgba(255,79,152,0.8)] active:scale-95 overflow-hidden w-full sm:w-auto z-10"
             onClick={handleYes}
-            style={{ animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}
+            style={{ animation: 'heartbeat-soft 2.5s ease-in-out infinite' }}
           >
             <div className="absolute inset-0 bg-white/20 translate-y-[100%] group-hover:translate-y-0 transition-transform duration-300 rounded-full" />
             <div className="absolute inset-0 w-1/2 -translate-x-[150%] bg-gradient-to-r from-transparent via-white/40 to-transparent group-hover:animate-sweep opacity-70 rounded-full" />
             
             <span className="relative z-10 drop-shadow-md">YES ❤️</span>
             
-            {/* Tiny hover hearts */}
-            <span className="absolute -top-1 -left-1 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-sm">💕</span>
-            <span className="absolute -bottom-1 -right-1 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-sm">💖</span>
-            <span className="absolute top-1 right-2 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-xs">♡</span>
+            {/* Tiny hover hearts that gather around the button */}
+            <span className="absolute -top-4 -left-2 text-[#FF9BC4] opacity-0 group-hover:opacity-100 group-hover:-translate-y-1 transition-all duration-500 text-base drop-shadow-sm">💕</span>
+            <span className="absolute -bottom-3 -right-2 text-white opacity-0 group-hover:opacity-100 group-hover:translate-y-1 transition-all duration-500 text-sm drop-shadow-sm">💖</span>
+            <span className="absolute top-2 -right-6 text-[#FFD1E2] opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-500 text-lg drop-shadow-sm">♡</span>
+            <span className="absolute -bottom-4 left-4 text-[#FF9BC4] opacity-0 group-hover:opacity-100 group-hover:translate-y-2 transition-all duration-500 text-sm drop-shadow-sm">💗</span>
+            <span className="absolute top-0 -left-5 text-white opacity-0 group-hover:opacity-100 group-hover:-translate-x-1 transition-all duration-500 text-xs drop-shadow-sm">♡</span>
           </button>
           
           {/* Negative Button */}

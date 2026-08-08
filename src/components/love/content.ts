@@ -48,10 +48,9 @@ export const questions = [
 ];
 
 export const noButtonTexts = [
-  "Shayad Nahi 🙈",
-  "Sure? 🥺",
-  "Ek baar aur soch lo 🥺",
-  "Please? 😭❤️",
-  "Nice try 😭",
+  "Are you sure? 🥺",
+  "Really? 🥹",
+  "Think again... 💗",
+  "One more chance? 🥺💕",
   "Okay YES ❤️",
 ];
