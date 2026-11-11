@@ -185,7 +185,7 @@ export function EnvelopeStep({ onOpen }: { onOpen: () => void }) {
       </div>
       
       <h1 className="text-glow font-display text-4xl font-semibold sm:text-5xl">
-        A letter arrived 💌
+        A letter arrived for Sonali 💌
       </h1>
       <p className="mt-3 text-base text-muted-foreground">
         Tap the heart seal to open it.
