@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { LoveBackground } from "@/components/love/Background";
+import { MusicPlayer } from "@/components/love/MusicPlayer";
 import {
   CountdownStep,
   EnvelopeStep,
@@ -56,6 +57,7 @@ type Step =
 function Index() {
   const [step, setStep] = useState<Step>("countdown");
   const [runId, setRunId] = useState(0);
+  const [musicTrigger, setMusicTrigger] = useState(0);
   const search = Route.useSearch();
   const recipientName = useRecipientName(search?.name);
   const recipientGender = useRecipientGender(search?.gender);
@@ -68,11 +70,18 @@ function Index() {
   return (
     <main className="relative flex min-h-[100svh] w-full items-center justify-center overflow-hidden py-14">
       {step !== "final" && <LoveBackground intense={step === "success" || step === "story"} />}
+      <MusicPlayer playTrigger={musicTrigger} />
       <h1 className="sr-only">Our Little Love Story</h1>
       <div key={`${runId}-${step}`} className="relative z-10 w-full">
         {step === "countdown" && <CountdownStep onDone={() => setStep("loading")} />}
         {step === "loading" && <LoadingStep gender={recipientGender} onDone={() => setStep("envelope")} />}
-        {step === "envelope" && <EnvelopeStep name={recipientName} onOpen={() => setStep("letter")} />}
+        {step === "envelope" && (
+          <EnvelopeStep
+            name={recipientName}
+            onStartMusic={() => setMusicTrigger((n) => n + 1)}
+            onOpen={() => setStep("letter")}
+          />
+        )}
         {step === "letter" && <LetterStep name={recipientName} gender={recipientGender} onDone={() => setStep("questions")} />}
         {step === "questions" && <QuestionsStep onDone={() => setStep("proposal")} />}
         {step === "proposal" && <ProposalStep name={recipientName} gender={recipientGender} onYes={() => setStep("success")} />}

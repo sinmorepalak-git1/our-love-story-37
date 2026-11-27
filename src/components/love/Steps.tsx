@@ -252,7 +252,15 @@ export function LoadingStep({ onDone, gender: propGender }: { onDone: () => void
 }
 
 /* ---------------- STEP 2: Envelope ---------------- */
-export function EnvelopeStep({ onOpen, name: propName }: { onOpen: () => void; name?: string }) {
+export function EnvelopeStep({
+  onOpen,
+  name: propName,
+  onStartMusic,
+}: {
+  onOpen: () => void;
+  name?: string;
+  onStartMusic?: () => void;
+}) {
   const [opened, setOpened] = useState(false);
   const [burst, setBurst] = useState(false);
   const recipientName = useRecipientName(propName);
@@ -261,6 +269,7 @@ export function EnvelopeStep({ onOpen, name: propName }: { onOpen: () => void; n
     if (opened) return;
     setOpened(true);
     setBurst(true);
+    onStartMusic?.();
     setTimeout(onOpen, 1500); // give time for animation
   };
 
