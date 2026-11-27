@@ -9,6 +9,57 @@ import {
 } from "./content";
 import { CursorTrail } from "./Background";
 
+/* ---------------- Helper: Recipient Name ---------------- */
+export function cleanRecipientName(raw?: unknown): string {
+  if (typeof raw !== "string" || !raw.trim()) {
+    return "";
+  }
+  let cleaned = raw.trim();
+  try {
+    if (cleaned.includes("%")) {
+      cleaned = decodeURIComponent(cleaned).trim();
+    }
+  } catch {
+    // If malformed URI sequence, keep original trimmed text
+  }
+  return cleaned;
+}
+
+export function useRecipientName(initialName?: string): string {
+  const [name, setName] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const qName = params.get("name");
+        if (qName) {
+          return cleanRecipientName(qName);
+        }
+      } catch {
+        // fallback to initialName
+      }
+    }
+    return cleanRecipientName(initialName);
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const qName = params.get("name");
+        if (qName !== null) {
+          setName(cleanRecipientName(qName));
+          return;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    setName(cleanRecipientName(initialName));
+  }, [initialName]);
+
+  return name;
+}
+
 /* ---------------- STEP 0: Countdown ---------------- */
 export function CountdownStep({ onDone }: { onDone: () => void }) {
   const [phase, setPhase] = useState<'sprinkle' | '3' | '2' | '1' | 'burst'>('sprinkle');
@@ -149,9 +200,10 @@ export function LoadingStep({ onDone }: { onDone: () => void }) {
 }
 
 /* ---------------- STEP 2: Envelope ---------------- */
-export function EnvelopeStep({ onOpen }: { onOpen: () => void }) {
+export function EnvelopeStep({ onOpen, name: propName }: { onOpen: () => void; name?: string }) {
   const [opened, setOpened] = useState(false);
   const [burst, setBurst] = useState(false);
+  const recipientName = useRecipientName(propName);
 
   const open = () => {
     if (opened) return;
@@ -184,8 +236,8 @@ export function EnvelopeStep({ onOpen }: { onOpen: () => void }) {
         ))}
       </div>
       
-      <h1 className="text-glow font-display text-4xl font-semibold sm:text-5xl">
-        A letter arrived for Rakhi 💌
+      <h1 className="text-glow font-display text-4xl font-semibold sm:text-5xl max-w-full break-words">
+        {recipientName ? `A letter arrived for ${recipientName} 💌` : "A letter arrived 💌"}
       </h1>
       <p className="mt-3 text-base text-muted-foreground">
         Tap the heart seal to open it.
@@ -239,9 +291,18 @@ export function EnvelopeStep({ onOpen }: { onOpen: () => void }) {
 }
 
 /* ---------------- STEP 3: Letter ---------------- */
-export function LetterStep({ onDone }: { onDone: () => void }) {
+export function LetterStep({ onDone, name: propName }: { onDone: () => void; name?: string }) {
   const [i, setI] = useState(0);
   const current = letters[i]!;
+  const recipientName = useRecipientName(propName);
+
+  const letterBody = useMemo(() => {
+    if (!current?.body) return "";
+    if (recipientName && /\[NAME\]/i.test(current.body)) {
+      return current.body.replace(/\[NAME\]/gi, recipientName);
+    }
+    return current.body;
+  }, [current, recipientName]);
 
   return (
     <Screen>
@@ -249,8 +310,8 @@ export function LetterStep({ onDone }: { onDone: () => void }) {
         {String(i + 1).padStart(2, "0")} / {String(letters.length).padStart(2, "0")}
       </span>
       <div key={i} className="glass-card animate-step-in w-full px-6 py-10 sm:px-9 border-primary/20 bg-black/20">
-        <p className="font-display text-2xl leading-relaxed whitespace-pre-line sm:text-3xl text-center text-primary-glow drop-shadow-sm">
-          {current.body}
+        <p className="font-display text-2xl leading-relaxed whitespace-pre-line sm:text-3xl text-center text-primary-glow drop-shadow-sm max-w-full break-words">
+          {letterBody}
         </p>
       </div>
       <LoveButton

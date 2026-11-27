@@ -11,13 +11,21 @@ import {
   StoryStep,
   SuccessStep,
   FinalStep,
+  useRecipientName,
 } from "@/components/love/Steps";
 
 const title = "Our Little Love Story";
 const description =
   "A secret romantic digital letter — open the envelope, answer a few cute questions, and see how our story begins.";
 
+type IndexSearchParams = {
+  name?: string;
+};
+
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>): IndexSearchParams => ({
+    name: typeof search.name === "string" ? search.name : undefined,
+  }),
   head: () => ({
     meta: [
       { title },
@@ -45,6 +53,8 @@ type Step =
 function Index() {
   const [step, setStep] = useState<Step>("countdown");
   const [runId, setRunId] = useState(0);
+  const search = Route.useSearch();
+  const recipientName = useRecipientName(search?.name);
 
   const replay = useCallback(() => {
     setRunId((n) => n + 1);
@@ -58,8 +68,8 @@ function Index() {
       <div key={`${runId}-${step}`} className="relative z-10 w-full">
         {step === "countdown" && <CountdownStep onDone={() => setStep("loading")} />}
         {step === "loading" && <LoadingStep onDone={() => setStep("envelope")} />}
-        {step === "envelope" && <EnvelopeStep onOpen={() => setStep("letter")} />}
-        {step === "letter" && <LetterStep onDone={() => setStep("questions")} />}
+        {step === "envelope" && <EnvelopeStep name={recipientName} onOpen={() => setStep("letter")} />}
+        {step === "letter" && <LetterStep name={recipientName} onDone={() => setStep("questions")} />}
         {step === "questions" && <QuestionsStep onDone={() => setStep("proposal")} />}
         {step === "proposal" && <ProposalStep onYes={() => setStep("success")} />}
         {step === "success" && <SuccessStep onContinue={() => setStep("story")} />}
