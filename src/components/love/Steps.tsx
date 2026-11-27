@@ -5,11 +5,61 @@ import {
   questions,
   noButtonTexts,
   letters,
+  getLetters,
   rememberWhen,
 } from "./content";
 import { CursorTrail } from "./Background";
 
-/* ---------------- Helper: Recipient Name ---------------- */
+/* ---------------- Helper: Recipient Name & Gender ---------------- */
+export type Gender = "boy" | "girl" | "neutral";
+
+export function parseGender(raw?: unknown): Gender {
+  if (typeof raw !== "string") return "neutral";
+  const val = raw.trim().toLowerCase();
+  if (val === "girl" || val === "female" || val === "f" || val === "woman") {
+    return "girl";
+  }
+  if (val === "boy" || val === "male" || val === "m" || val === "man") {
+    return "boy";
+  }
+  return "neutral";
+}
+
+export function useRecipientGender(initialGender?: string): Gender {
+  const [gender, setGender] = useState<Gender>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const qGender = params.get("gender");
+        if (qGender) {
+          return parseGender(qGender);
+        }
+      } catch {
+        // fallback
+      }
+    }
+    return parseGender(initialGender);
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const qGender = params.get("gender");
+        if (qGender !== null) {
+          setGender(parseGender(qGender));
+          return;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    setGender(parseGender(initialGender));
+  }, [initialGender]);
+
+  return gender;
+}
+
 export function cleanRecipientName(raw?: unknown): string {
   if (typeof raw !== "string" || !raw.trim()) {
     return "";
@@ -145,8 +195,9 @@ export function CountdownStep({ onDone }: { onDone: () => void }) {
 }
 
 /* ---------------- STEP 1: Love.exe loading -> Searching for the prettiest smile ---------------- */
-export function LoadingStep({ onDone }: { onDone: () => void }) {
+export function LoadingStep({ onDone, gender: propGender }: { onDone: () => void; gender?: Gender }) {
   const [phase, setPhase] = useState<'searching' | 'found'>('searching');
+  const gender = useRecipientGender(propGender);
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase('found'), 2000);
@@ -175,7 +226,8 @@ export function LoadingStep({ onDone }: { onDone: () => void }) {
         {phase === 'searching' ? (
           <>
             <p className="text-xl sm:text-2xl font-serif text-[#FFD1E2] animate-step-in text-center px-4" style={{ filter: "drop-shadow(0 0 10px rgba(255,209,226,0.5))" }}>
-              Searching for the prettiest smile... <span className="inline-block animate-pulse">💗</span>
+              {gender === "boy" ? "Searching for that handsome smile... " : "Searching for the prettiest smile... "}
+              <span className="inline-block animate-pulse">💗</span>
             </p>
             <div className="mt-8 flex gap-3 text-2xl text-[#FF9BC4]">
               <span className="animate-bounce" style={{ animationDelay: '0s' }}>♡</span>
@@ -189,7 +241,7 @@ export function LoadingStep({ onDone }: { onDone: () => void }) {
         ) : (
           <div className="animate-step-in flex flex-col items-center">
             <p className="text-3xl sm:text-4xl font-serif text-[#FFF0F5] font-bold" style={{ filter: "drop-shadow(0 0 20px rgba(255,240,245,0.8))" }}>
-              Found her.
+              {gender === "boy" ? "Found him." : gender === "girl" ? "Found her." : "Found you."}
             </p>
             <HeartIcon className="mt-6 w-20 h-20 text-[#FF4F98] animate-heartbeat-soft drop-shadow-[0_0_30px_rgba(255,79,152,0.9)]" />
           </div>
@@ -291,32 +343,26 @@ export function EnvelopeStep({ onOpen, name: propName }: { onOpen: () => void; n
 }
 
 /* ---------------- STEP 3: Letter ---------------- */
-export function LetterStep({ onDone, name: propName }: { onDone: () => void; name?: string }) {
+export function LetterStep({ onDone, name: propName, gender: propGender }: { onDone: () => void; name?: string; gender?: Gender }) {
   const [i, setI] = useState(0);
-  const current = letters[i]!;
   const recipientName = useRecipientName(propName);
-
-  const letterBody = useMemo(() => {
-    if (!current?.body) return "";
-    if (recipientName && /\[NAME\]/i.test(current.body)) {
-      return current.body.replace(/\[NAME\]/gi, recipientName);
-    }
-    return current.body;
-  }, [current, recipientName]);
+  const gender = useRecipientGender(propGender);
+  const currentLetters = useMemo(() => getLetters(gender, recipientName), [gender, recipientName]);
+  const current = currentLetters[i] || currentLetters[0];
 
   return (
     <Screen>
       <span className="mb-5 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs tracking-[0.3em] text-primary-glow">
-        {String(i + 1).padStart(2, "0")} / {String(letters.length).padStart(2, "0")}
+        {String(i + 1).padStart(2, "0")} / {String(currentLetters.length).padStart(2, "0")}
       </span>
       <div key={i} className="glass-card animate-step-in w-full px-6 py-10 sm:px-9 border-primary/20 bg-black/20">
         <p className="font-display text-2xl leading-relaxed whitespace-pre-line sm:text-3xl text-center text-primary-glow drop-shadow-sm max-w-full break-words">
-          {letterBody}
+          {current.body}
         </p>
       </div>
       <LoveButton
         className="mt-10 w-full sm:w-auto"
-        onClick={() => (i < letters.length - 1 ? setI(i + 1) : onDone())}
+        onClick={() => (i < currentLetters.length - 1 ? setI(i + 1) : onDone())}
       >
         {current.cta}
       </LoveButton>
@@ -560,10 +606,12 @@ export function QuestionsStep({ onDone }: { onDone: () => void }) {
 }
 
 /* ---------------- STEP 9: Proposal ---------------- */
-export function ProposalStep({ onYes }: { onYes: () => void }) {
+export function ProposalStep({ onYes, name: propName, gender: propGender }: { onYes: () => void; name?: string; gender?: Gender }) {
   const [tries, setTries] = useState(0);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [bursts, setBursts] = useState<{ id: number; x: number; y: number; isSparkle?: boolean }[]>([]);
+  const recipientName = useRecipientName(propName);
+  const gender = useRecipientGender(propGender);
   const isYesNow = tries >= noButtonTexts.length - 1;
 
   const dodge = () => {
@@ -705,7 +753,7 @@ export function ProposalStep({ onYes }: { onYes: () => void }) {
 
         {/* 5. Header */}
         <p className="font-display text-xl sm:text-2xl text-[#FFD1E2] mt-2 flex items-center gap-3 animate-step-in drop-shadow-[0_0_10px_rgba(255,209,226,0.3)]" style={{ animationDelay: '0.4s' }}>
-          <span className="font-light opacity-60">♡ ───</span> Okay Jaan... ❤️ <span className="font-light opacity-60">─── ♡</span>
+          <span className="font-light opacity-60">♡ ───</span> Okay {recipientName || "Jaan"}... ❤️ <span className="font-light opacity-60">─── ♡</span>
         </p>
 
         {/* 6. Main Question */}
@@ -719,7 +767,13 @@ export function ProposalStep({ onYes }: { onYes: () => void }) {
           <span className="absolute top-1/2 -left-6 text-[#FF9BC4] opacity-40 text-xl animate-soft-float" style={{ animationDelay: '0.8s' }}>💕</span>
           <span className="absolute bottom-0 -right-8 text-[#FFD1E2] opacity-30 text-lg animate-soft-float" style={{ animationDelay: '1.5s' }}>♡</span>
 
-          Kya Tum Meri<br/>Girlfriend<br/>Banogi? <span className="inline-block animate-heartbeat-soft text-[#FF4F98] ml-1 drop-shadow-[0_0_20px_rgba(255,79,152,0.7)]">❤️</span>
+          {gender === "boy" ? (
+            <>Kya Tum Mere<br/>Boyfriend<br/>Banoge?</>
+          ) : gender === "girl" ? (
+            <>Kya Tum Meri<br/>Girlfriend<br/>Banogi?</>
+          ) : (
+            <>Kya Tum Mere<br/>Humsafar<br/>Banoge?</>
+          )} <span className="inline-block animate-heartbeat-soft text-[#FF4F98] ml-1 drop-shadow-[0_0_20px_rgba(255,79,152,0.7)]">❤️</span>
         </h2>
 
         {/* 8. Message Box */}
@@ -789,7 +843,8 @@ export function ProposalStep({ onYes }: { onYes: () => void }) {
 }
 
 /* ---------------- STEP 10: Celebration ---------------- */
-export function SuccessStep({ onContinue }: { onContinue: () => void }) {
+export function SuccessStep({ onContinue, gender: propGender }: { onContinue: () => void; gender?: Gender }) {
+  const gender = useRecipientGender(propGender);
   const burst = useMemo(
     () =>
       Array.from({ length: 40 }, (_, i) => {
@@ -846,7 +901,7 @@ export function SuccessStep({ onContinue }: { onContinue: () => void }) {
 
       <div className="relative z-30 flex flex-col items-center">
         <h2 className="text-glow font-display text-6xl font-bold sm:text-7xl animate-step-in scale-110">
-          SHE SAID YES! 💕
+          {gender === "boy" ? "HE SAID YES! 💕" : gender === "girl" ? "SHE SAID YES! 💕" : "IT'S A YES! 💕"}
         </h2>
         <HeartIcon className="animate-heart-pulse mt-12 h-32 w-32 text-primary drop-shadow-[0_0_60px_var(--primary)]" />
         

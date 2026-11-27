@@ -12,6 +12,7 @@ import {
   SuccessStep,
   FinalStep,
   useRecipientName,
+  useRecipientGender,
 } from "@/components/love/Steps";
 
 const title = "Our Little Love Story";
@@ -20,11 +21,13 @@ const description =
 
 type IndexSearchParams = {
   name?: string;
+  gender?: string;
 };
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>): IndexSearchParams => ({
     name: typeof search.name === "string" ? search.name : undefined,
+    gender: typeof search.gender === "string" ? search.gender : undefined,
   }),
   head: () => ({
     meta: [
@@ -55,6 +58,7 @@ function Index() {
   const [runId, setRunId] = useState(0);
   const search = Route.useSearch();
   const recipientName = useRecipientName(search?.name);
+  const recipientGender = useRecipientGender(search?.gender);
 
   const replay = useCallback(() => {
     setRunId((n) => n + 1);
@@ -67,12 +71,12 @@ function Index() {
       <h1 className="sr-only">Our Little Love Story</h1>
       <div key={`${runId}-${step}`} className="relative z-10 w-full">
         {step === "countdown" && <CountdownStep onDone={() => setStep("loading")} />}
-        {step === "loading" && <LoadingStep onDone={() => setStep("envelope")} />}
+        {step === "loading" && <LoadingStep gender={recipientGender} onDone={() => setStep("envelope")} />}
         {step === "envelope" && <EnvelopeStep name={recipientName} onOpen={() => setStep("letter")} />}
-        {step === "letter" && <LetterStep name={recipientName} onDone={() => setStep("questions")} />}
+        {step === "letter" && <LetterStep name={recipientName} gender={recipientGender} onDone={() => setStep("questions")} />}
         {step === "questions" && <QuestionsStep onDone={() => setStep("proposal")} />}
-        {step === "proposal" && <ProposalStep onYes={() => setStep("success")} />}
-        {step === "success" && <SuccessStep onContinue={() => setStep("story")} />}
+        {step === "proposal" && <ProposalStep name={recipientName} gender={recipientGender} onYes={() => setStep("success")} />}
+        {step === "success" && <SuccessStep gender={recipientGender} onContinue={() => setStep("story")} />}
         {step === "story" && <StoryStep onContinue={() => setStep("final")} />}
         {step === "final" && <FinalStep onReplay={replay} />}
       </div>
